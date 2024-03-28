@@ -18,7 +18,12 @@ export const createPaymentIntent: PayloadHandler = async (req, res): Promise<voi
     res.status(401).send('Unauthorized')
     return
   }
-
+  // Assuming body now includes shipping information and description
+  // const { description, shipping } = body // Ensure these are collected from the frontend
+  // if (!description || !shipping) {
+  //   res.status(400).json({ error: 'Missing required fields: description or shipping' })
+  //   return
+  // }
   const fullUser = await payload.findByID({
     collection: 'users',
     id: user?.id,
@@ -37,6 +42,14 @@ export const createPaymentIntent: PayloadHandler = async (req, res): Promise<voi
       const customer = await stripe.customers.create({
         email: fullUser?.email,
         name: fullUser?.name,
+        // Adding billing details
+        address: {
+          line1: 'Purnagiri vihar',
+          postal_code: '262309',
+          city: 'Tanakpur',
+          state: 'Uttarakhand',
+          country: 'US', // Corrected country code
+        },
       })
 
       stripeCustomerID = customer.id
@@ -96,8 +109,20 @@ export const createPaymentIntent: PayloadHandler = async (req, res): Promise<voi
     const paymentIntent = await stripe.paymentIntents.create({
       customer: stripeCustomerID,
       amount: total,
-      currency: 'usd',
+      currency: 'inr',
       payment_method_types: ['card'],
+      description: 'mudit sir', // Adding the description of the goods being purchased
+      shipping: {
+        // Adding shipping details
+        name: 'mudit sir',
+        address: {
+          line1: 'Purnagiri vihar',
+          postal_code: '262309',
+          city: 'Tanakpur',
+          state: 'Uttarakhand',
+          country: 'US', // Corrected country code
+        },
+      },
     })
 
     res.send({ client_secret: paymentIntent.client_secret })
